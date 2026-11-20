@@ -1,0 +1,2182 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>PROMATEC - Sistema de Cadastro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b1c33'/%3E%3Cpath d='M20 44V22h10c6 0 10 3 10 8s-4 8-10 8h-4v6h-6z' fill='%235cc21b'/%3E%3Ccircle cx='44' cy='20' r='4' fill='%232ea3ff'/%3E%3C/svg%3E">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --pm-verde: #5cc21b;
+    --pm-verde-escuro: #3e8a11;
+    --pm-azul: #2ea3ff;
+    --pm-azul-escuro: #0b6bd6;
+    --pm-escuro: #0b1c33;
+    --pm-escuro-2: #10243f;
+    --pm-cinza: #f5f6fa;
+    --pm-texto: #1c2e42;
+  }
+
+  html, body { height: 100%; }
+  body {
+    background: var(--pm-cinza);
+    color: var(--pm-texto);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  }
+  .hidden { display: none !important; }
+
+  /* ===== NAVBAR PROMATEC ===== */
+  .navbar-pm {
+    background: linear-gradient(135deg, var(--pm-escuro) 0%, var(--pm-escuro-2) 100%);
+    border-bottom: 3px solid;
+    border-image: linear-gradient(90deg, var(--pm-verde), var(--pm-azul)) 1;
+    box-shadow: 0 2px 12px rgba(0,0,0,.25);
+    margin-bottom: 0;
+  }
+  .navbar-pm .navbar-brand {
+    display: flex; align-items: center; gap: 10px;
+    color: #fff;
+  }
+  .navbar-pm .logo-svg { height: 40px; width: auto; }
+  .navbar-pm .brand-txt {
+    line-height: 1; display: flex; flex-direction: column;
+  }
+  .navbar-pm .brand-txt small {
+    font-size: 0.62rem; letter-spacing: 2px; color: #9fb4cc;
+    font-weight: 400;
+  }
+  .navbar-pm .brand-txt strong {
+    font-size: 1.15rem; letter-spacing: 1px;
+    background: linear-gradient(90deg, var(--pm-verde), var(--pm-azul));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .navbar-pm .nav-link { color: #c9d6e5 !important; }
+  .navbar-pm .nav-link:hover { color: var(--pm-verde) !important; }
+  .navbar-pm .navbar-toggler-icon { filter: invert(1); }
+
+  /* ===== BOTÕES TEMA ===== */
+  .btn-primary { background: var(--pm-azul-escuro); border-color: var(--pm-azul-escuro); }
+  .btn-primary:hover, .btn-primary:focus { background: var(--pm-azul); border-color: var(--pm-azul); }
+  .btn-success { background: var(--pm-verde-escuro); border-color: var(--pm-verde-escuro); }
+  .btn-success:hover, .btn-success:focus { background: var(--pm-verde); border-color: var(--pm-verde); }
+
+  #app-container { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  #app-main { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 1rem; min-height: 0; }
+
+  #status-conexao {
+    position: fixed; bottom: 15px; right: 15px; z-index: 9999;
+    padding: 8px 14px; border-radius: 6px; font-size: 0.85rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+
+  .table-wrapper {
+    flex: 1; min-height: 0; overflow: auto;
+    border-radius: 8px; border: 1px solid #dee2e6; background: #fff;
+  }
+  .table-wrapper thead th {
+    position: sticky; top: 0; z-index: 2;
+    background: linear-gradient(180deg, #f8f9fa, #eef2f7);
+    border-bottom: 2px solid var(--pm-azul);
+    color: var(--pm-escuro);
+  }
+  #view-pessoas { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+
+  .link-item {
+    border-left: 3px solid var(--pm-azul); background: #f8f9fa;
+    padding: 8px 12px; margin-bottom: 6px; border-radius: 4px;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; flex-wrap: wrap;
+  }
+  .link-item a { word-break: break-all; }
+  .atalhos-links { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .atalhos-links .btn { flex: 1 1 auto; min-width: 140px; }
+
+  .doc-card {
+    border: 1px solid #dee2e6; border-left: 4px solid var(--pm-verde);
+    border-radius: 6px; background: #fff; padding: 10px 12px;
+    margin-bottom: 8px; display: flex; justify-content: space-between;
+    align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .doc-card .doc-info { flex: 1 1 220px; min-width: 0; }
+  .doc-card .doc-tipo { font-weight: 600; color: var(--pm-verde-escuro); }
+  .doc-card .doc-meta { font-size: 0.8rem; color: #6c757d; }
+  .doc-card .doc-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .doc-badge {
+    display: inline-block; font-size: 0.7rem; padding: 2px 8px;
+    border-radius: 10px; font-weight: 600; text-transform: uppercase;
+  }
+  .doc-badge.pendente { background: #fff3cd; color: #856404; }
+  .doc-badge.validado { background: #d1e7dd; color: #0f5132; }
+
+  .doc-preview {
+    border: 2px dashed var(--pm-verde); border-radius: 8px;
+    padding: 10px; background: #f8fff9; margin-bottom: 8px;
+  }
+  .doc-preview img { max-width: 100%; max-height: 240px; border-radius: 4px; display: block; margin: 0 auto 8px; }
+
+  .filtros-bar {
+    background: #fff; border: 1px solid #dee2e6; border-radius: 8px;
+    padding: 12px; margin-bottom: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  }
+
+  .relatorio-resumo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin-bottom: 16px;
+  }
+  .relatorio-card {
+    background: #f8f9fa; border-left: 4px solid var(--pm-azul);
+    border-radius: 6px; padding: 12px;
+  }
+  .relatorio-card .num { font-size: 1.8rem; font-weight: 700; color: var(--pm-azul-escuro); line-height: 1; }
+  .relatorio-card .lbl { font-size: 0.85rem; color: #6c757d; margin-top: 4px; }
+  .relatorio-tabela th { background: #f8f9fa; }
+
+  .btn-gov { background: #1351b4; border-color: #1351b4; color: #fff; font-weight: 600; }
+  .btn-gov:hover { background: #0c326f; border-color: #0c326f; color: #fff; }
+
+  /* ===== FICHA IMPRESSÃO ===== */
+  .ficha-print {
+    max-width: 720px; margin: 0 auto; background: #fff;
+    padding: 24px; border: 1px solid #dee2e6; border-radius: 8px;
+    font-family: Arial, sans-serif;
+  }
+  .ficha-print h3 { margin: 0 0 4px 0; color: var(--pm-azul-escuro); }
+  .ficha-print .ficha-sub { color: #6c757d; font-size: 0.85rem; margin-bottom: 16px; }
+  .ficha-print .ficha-secao {
+    border-top: 2px solid var(--pm-azul);
+    padding-top: 8px; margin-top: 16px;
+  }
+  .ficha-print .ficha-secao h5 { color: var(--pm-azul-escuro); font-size: 0.95rem; text-transform: uppercase; margin-bottom: 10px; }
+  .ficha-print .ficha-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 8px 20px;
+  }
+  .ficha-print .ficha-linha { font-size: 0.9rem; border-bottom: 1px dashed #dee2e6; padding-bottom: 4px; }
+  .ficha-print .ficha-linha strong { color: #333; display: inline-block; min-width: 100px; }
+  .ficha-print .ficha-servico {
+    background: #e7f1ff; border-left: 4px solid var(--pm-azul-escuro);
+    padding: 10px 12px; border-radius: 4px; margin-top: 8px;
+  }
+  .ficha-print .ficha-servico .valor { font-size: 1.4rem; font-weight: 700; color: var(--pm-azul-escuro); }
+  .ficha-print .ficha-assinatura {
+    margin-top: 40px; text-align: center;
+    border-top: 1px solid #333; padding-top: 4px; width: 60%; margin-left: auto; margin-right: auto;
+    font-size: 0.85rem;
+  }
+
+  /* ===== TELA DE LOGIN ===== */
+  #tela-login {
+    position: fixed; inset: 0; z-index: 9000;
+    background: radial-gradient(circle at 20% 20%, var(--pm-escuro-2) 0%, var(--pm-escuro) 60%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #tela-login .login-box {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    width: 100%; max-width: 420px;
+    padding: 32px 28px;
+    box-shadow: 0 12px 48px rgba(0,0,0,.4);
+  }
+  #tela-login .login-logo {
+    display: flex; flex-direction: column; align-items: center;
+    margin-bottom: 24px;
+  }
+  #tela-login .login-logo svg { height: 90px; margin-bottom: 8px; }
+  #tela-login .login-logo h1 {
+    font-size: 1.6rem; letter-spacing: 2px; margin: 0;
+    background: linear-gradient(90deg, var(--pm-verde), var(--pm-azul));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+  }
+  #tela-login .login-logo small {
+    color: #9fb4cc; font-size: 0.7rem; letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  #tela-login .form-control {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    color: #fff;
+  }
+  #tela-login .form-control:focus {
+    background: rgba(255,255,255,.12);
+    border-color: var(--pm-azul);
+    color: #fff; box-shadow: 0 0 0 3px rgba(46,163,255,.2);
+  }
+  #tela-login .form-control::placeholder { color: #7d8fa5; }
+  #tela-login label { color: #c9d6e5; font-size: 0.85rem; margin-bottom: 4px; }
+  #tela-login .btn-login {
+    background: linear-gradient(90deg, var(--pm-verde), var(--pm-azul));
+    border: none; color: #fff; font-weight: 700;
+    padding: 10px; letter-spacing: 1px;
+    width: 100%; transition: filter .2s;
+  }
+  #tela-login .btn-login:hover { filter: brightness(1.15); color: #fff; }
+  #tela-login .btn-login:disabled { opacity: .6; }
+
+  #campo-admin-secreto {
+    border-top: 1px dashed rgba(255,255,255,.15);
+    padding-top: 16px; margin-top: 8px;
+  }
+
+  @media print {
+    body { background: #fff; overflow: visible !important; }
+    .navbar-pm, #status-conexao, .modal, .modal-backdrop, #tela-login, .no-print { display: none !important; }
+    #app-main { padding: 0 !important; overflow: visible !important; }
+    .ficha-print { box-shadow: none; border: none; margin: 0; max-width: 100%; }
+    .ficha-print .ficha-secao { page-break-inside: avoid; }
+  }
+
+  @media (max-width: 768px) {
+    #app-main { padding: 0.5rem; }
+    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+    .atalhos-links .btn { min-width: 100%; }
+    .doc-card { flex-direction: column; align-items: stretch; }
+    .relatorio-card .num { font-size: 1.4rem; }
+    .ficha-print { padding: 12px; }
+    .ficha-print .ficha-grid { grid-template-columns: 1fr; }
+    .ficha-print .ficha-linha strong { min-width: 80px; font-size: 0.8rem; }
+    .navbar-pm .brand-txt strong { font-size: 0.95rem; }
+    #tela-login .login-box { padding: 24px 20px; }
+    #tela-login .login-logo svg { height: 70px; }
+    #tela-login .login-logo h1 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Logo SVG reutilizável -->
+<svg style="display:none">
+  <symbol id="logo-promatec" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="gradPM" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#5cc21b"/>
+        <stop offset="100%" stop-color="#2ea3ff"/>
+      </linearGradient>
+    </defs>
+    <path d="M 210 40 Q 270 40 300 90 Q 325 135 300 175 Q 275 210 220 215 L 220 250 L 170 250 L 170 190 L 235 190 Q 265 188 272 165 Q 278 142 258 122 Q 240 105 210 105 L 170 105 L 170 40 Z"
+          fill="url(#gradPM)"/>
+    <g fill="none" stroke="url(#gradPM)" stroke-width="4" stroke-linecap="round">
+      <path d="M 60 100 L 130 100 L 145 115 L 175 115"/>
+      <path d="M 50 130 L 120 130 L 135 145 L 165 145"/>
+      <path d="M 65 160 L 110 160 L 125 175 L 155 175"/>
+      <path d="M 80 190 L 100 190 L 115 205 L 145 205"/>
+    </g>
+    <g fill="#2ea3ff">
+      <circle cx="60" cy="100" r="7"/>
+      <circle cx="50" cy="130" r="7" fill="#5cc21b"/>
+      <circle cx="65" cy="160" r="7"/>
+      <circle cx="80" cy="190" r="7" fill="#5cc21b"/>
+    </g>
+    <g fill="#0b1c33" stroke="#2ea3ff" stroke-width="3">
+      <circle cx="130" cy="100" r="6"/>
+      <circle cx="120" cy="130" r="6" stroke="#5cc21b"/>
+      <circle cx="110" cy="160" r="6"/>
+      <circle cx="100" cy="190" r="6" stroke="#5cc21b"/>
+    </g>
+  </symbol>
+</svg>
+
+<!-- ===== TELA DE LOGIN ===== -->
+<div id="tela-login">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg><use href="#logo-promatec"/></svg>
+      <h1>PROMATEC</h1>
+      <small>Instituto Educacional</small>
+    </div>
+
+    <form id="form-login" onsubmit="fazerLogin(event)">
+      <div class="mb-3">
+        <label>E-mail</label>
+        <input type="email" class="form-control" id="login-email" required autocomplete="username">
+      </div>
+      <div class="mb-3">
+        <label>Senha</label>
+        <input type="password" class="form-control" id="login-senha" required autocomplete="current-password">
+      </div>
+
+      <div id="campo-admin-secreto" class="hidden">
+        <div class="alert alert-warning py-2 small mb-2">
+          🔐 <strong>Acesso master</strong> — senha do administrador
+        </div>
+        <div class="mb-3">
+          <label>Senha do Administrador</label>
+          <input type="password" class="form-control" id="login-senha-admin" autocomplete="off" placeholder="Senha master">
+        </div>
+      </div>
+
+      <div id="msg-login"></div>
+
+      <button type="submit" class="btn btn-login mt-2" id="btn-login">ENTRAR</button>
+    </form>
+
+    <p class="text-center small mt-3 mb-0" style="color:#7d8fa5;">
+      Esqueceu a senha? Contate o administrador.
+    </p>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app-container" class="hidden">
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar navbar-expand-lg navbar-pm">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#" onclick="showView('pessoas'); return false;">
+        <svg class="logo-svg"><use href="#logo-promatec"/></svg>
+        <span class="brand-txt">
+          <small>INSTITUTO EDUCACIONAL</small>
+          <strong>PROMATEC</strong>
+        </span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMenu">
+        <div class="navbar-nav me-auto">
+          <a class="nav-link" href="#" onclick="showView('pessoas'); return false;">Pessoas</a>
+          <a class="nav-link" href="#" onclick="showView('servicos'); return false;">Serviços</a>
+          <a class="nav-link" href="#" onclick="showView('categorias'); return false;">Categorias</a>
+          <a class="nav-link" href="#" onclick="showView('cadastrantes'); return false;">Cadastrantes</a>
+        </div>
+        <div class="d-flex flex-column flex-lg-row gap-2 mt-2 mt-lg-0 align-items-lg-center">
+          <span class="text-white-50 small d-none d-lg-inline">👤 <span id="navbar-nome">—</span></span>
+          <button class="btn btn-sm btn-outline-light" onclick="abrirRelatorio()">📊 Relatório</button>
+          <a class="btn btn-sm btn-gov" href="https://www.gov.br" target="_blank" rel="noopener">🇧🇷 Gov.br</a>
+          <button class="btn btn-sm btn-outline-danger" onclick="fazerLogout()">Sair</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div id="app-main">
+
+    <!-- ===== VIEW PESSOAS ===== -->
+    <div id="view-pessoas">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+        <h2 class="mb-0">Pessoas</h2>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-outline-primary" onclick="imprimirLote()">🖨 Imprimir selecionadas</button>
+          <button class="btn btn-primary" onclick="abrirFormPessoa()">+ Nova Pessoa</button>
+        </div>
+      </div>
+
+      <div class="filtros-bar">
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-md-3">
+            <label class="form-label small mb-1">🔍 Buscar</label>
+            <input type="text" class="form-control form-control-sm" id="filtro-busca"
+                   placeholder="Nome, e-mail, telefone ou CPF" oninput="aplicarFiltros()">
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">📂 Categoria</label>
+            <select class="form-select form-select-sm" id="filtro-categoria" onchange="aplicarFiltros()">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">👤 Cadastrante</label>
+            <select class="form-select form-select-sm" id="filtro-cadastrante" onchange="aplicarFiltros()">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">🛠 Serviço</label>
+            <select class="form-select form-select-sm" id="filtro-servico" onchange="aplicarFiltros()">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-1">
+            <label class="form-label small mb-1">📅 De</label>
+            <input type="date" class="form-control form-control-sm" id="filtro-de" onchange="aplicarFiltros()">
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">📅 Até</label>
+            <input type="date" class="form-control form-control-sm" id="filtro-ate" onchange="aplicarFiltros()">
+          </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <small class="text-muted" id="filtro-contador">Carregando...</small>
+          <button class="btn btn-sm btn-outline-secondary" onclick="limparFiltros()">Limpar filtros</button>
+        </div>
+      </div>
+
+      <div id="msg-pessoas"></div>
+
+      <div class="table-wrapper">
+        <table class="table table-striped table-hover mb-0">
+          <thead>
+            <tr>
+              <th style="width:32px;"><input type="checkbox" id="chk-todos" onchange="toggleTodos(this)"></th>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Telefone</th>
+              <th>Categoria</th>
+              <th>Serviço</th>
+              <th>Valor</th>
+              <th>Cadastrante</th>
+              <th>Docs</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-pessoas"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== VIEW FORM PESSOA ===== -->
+    <div id="view-form-pessoa" class="hidden">
+      <h2 id="titulo-form-pessoa">Nova Pessoa</h2>
+      <div id="msg-form-pessoa"></div>
+      <div class="card"><div class="card-body">
+        <form id="form-pessoa" onsubmit="salvarPessoa(event)">
+          <input type="hidden" id="pessoa-id">
+          <div class="row">
+            <div class="col-12 col-md-6 mb-3"><label class="form-label">Nome *</label>
+              <input type="text" class="form-control" id="pessoa-nome" required></div>
+            <div class="col-12 col-md-6 mb-3"><label class="form-label">E-mail *</label>
+              <input type="email" class="form-control" id="pessoa-email" required></div>
+            <div class="col-12 col-md-4 mb-3"><label class="form-label">Telefone</label>
+              <input type="text" class="form-control" id="pessoa-telefone" inputmode="numeric" maxlength="15" placeholder="(99) 99999-9999"></div>
+            <div class="col-12 col-md-4 mb-3"><label class="form-label">CPF</label>
+              <input type="text" class="form-control" id="pessoa-cpf" inputmode="numeric" maxlength="14" placeholder="999.999.999-99"></div>
+            <div class="col-12 col-md-4 mb-3"><label class="form-label">Nascimento</label>
+              <input type="date" class="form-control" id="pessoa-nasc"></div>
+            <div class="col-12 col-md-6 mb-3"><label class="form-label">Categoria</label>
+              <select class="form-select" id="pessoa-categoria"></select></div>
+            <div class="col-12 col-md-6 mb-3"><label class="form-label">Cadastrante *</label>
+              <select class="form-select" id="pessoa-cadastrante" required></select></div>
+            <div class="col-12 col-md-6 mb-3"><label class="form-label">Serviço *</label>
+              <select class="form-select" id="pessoa-servico" required onchange="atualizarValorServico()"></select></div>
+            <div class="col-12 col-md-6 mb-3"><label class="form-label">Valor do Serviço</label>
+              <input type="text" class="form-control bg-light" id="pessoa-servico-valor" readonly placeholder="—"></div>
+          </div>
+
+          <hr>
+          <h5>📎 Documento Pessoal</h5>
+          <p class="text-muted small mb-2">Anexe a foto do documento. A imagem é convertida em PDF e armazenada com segurança.</p>
+          <button type="button" class="btn btn-outline-success w-100 mb-3" onclick="abrirModalDocumento()">
+            📷 Anexar Documento (RG, CPF, CNH...)
+          </button>
+          <div id="documentos-container"></div>
+
+          <hr>
+          <h5>🔗 Links / Anexos externos</h5>
+          <div class="atalhos-links">
+            <button type="button" class="btn btn-outline-primary" onclick="abrirAtalhoDrive()">📁 Google Drive</button>
+          </div>
+          <div id="links-container"></div>
+          <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="addLinkRow()">
+            + Adicionar link manual
+          </button>
+
+          <br>
+          <button type="submit" class="btn btn-success">💾 Salvar</button>
+          <button type="button" class="btn btn-secondary" onclick="showView('pessoas')">Cancelar</button>
+        </form>
+      </div></div>
+    </div>
+
+    <!-- ===== VIEW SERVIÇOS ===== -->
+    <div id="view-servicos" class="hidden">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+        <h2 class="mb-0">Serviços</h2>
+        <button class="btn btn-primary" onclick="abrirFormServico()">+ Novo Serviço</button>
+      </div>
+      <div id="msg-servicos"></div>
+      <div class="card"><div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-striped mb-0">
+            <thead>
+              <tr>
+                <th>Nome</th><th>Descrição</th><th class="text-end">Valor</th>
+                <th>Status</th><th>Pessoas</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-servicos"></tbody>
+          </table>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ===== VIEW FORM SERVIÇO ===== -->
+    <div id="view-form-servico" class="hidden">
+      <h2 id="titulo-form-servico">Novo Serviço</h2>
+      <div id="msg-form-servico"></div>
+      <div class="card"><div class="card-body">
+        <form id="form-servico" onsubmit="salvarServico(event)">
+          <input type="hidden" id="servico-id">
+          <div class="row">
+            <div class="col-12 col-md-6 mb-3"><label class="form-label">Nome *</label>
+              <input type="text" class="form-control" id="servico-nome" required placeholder="Ex: Curso de informática"></div>
+            <div class="col-12 col-md-4 mb-3"><label class="form-label">Valor (R$) *</label>
+              <input type="text" class="form-control" id="servico-valor" inputmode="numeric" required placeholder="0,00"></div>
+            <div class="col-12 col-md-2 mb-3"><label class="form-label">Ativo</label>
+              <select class="form-select" id="servico-ativo">
+                <option value="true">Sim</option>
+                <option value="false">Não</option>
+              </select></div>
+            <div class="col-12 mb-3"><label class="form-label">Descrição</label>
+              <textarea class="form-control" id="servico-desc" rows="3" placeholder="Detalhes do serviço..."></textarea></div>
+          </div>
+          <button type="submit" class="btn btn-success">💾 Salvar</button>
+          <button type="button" class="btn btn-secondary" onclick="showView('servicos')">Cancelar</button>
+        </form>
+      </div></div>
+    </div>
+
+    <!-- ===== VIEW CATEGORIAS ===== -->
+    <div id="view-categorias" class="hidden">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+        <h2 class="mb-0">Categorias</h2>
+        <button class="btn btn-primary" onclick="abrirFormCategoria()">+ Nova Categoria</button>
+      </div>
+      <div id="msg-categorias"></div>
+      <div class="card"><div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-striped mb-0">
+            <thead><tr><th>Nome</th><th>Descrição</th><th>Pessoas</th><th>Ações</th></tr></thead>
+            <tbody id="tabela-categorias"></tbody>
+          </table>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ===== VIEW FORM CATEGORIA ===== -->
+    <div id="view-form-categoria" class="hidden">
+      <h2 id="titulo-form-categoria">Nova Categoria</h2>
+      <div id="msg-form-categoria"></div>
+      <div class="card"><div class="card-body">
+        <form id="form-categoria" onsubmit="salvarCategoria(event)">
+          <input type="hidden" id="categoria-id">
+          <div class="mb-3"><label class="form-label">Nome *</label>
+            <input type="text" class="form-control" id="categoria-nome" required></div>
+          <div class="mb-3"><label class="form-label">Descrição</label>
+            <textarea class="form-control" id="categoria-desc" rows="3"></textarea></div>
+          <button type="submit" class="btn btn-success">💾 Salvar</button>
+          <button type="button" class="btn btn-secondary" onclick="showView('categorias')">Cancelar</button>
+        </form>
+      </div></div>
+    </div>
+
+    <!-- ===== VIEW CADASTRANTES ===== -->
+    <div id="view-cadastrantes" class="hidden">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+        <h2 class="mb-0">Cadastrantes</h2>
+        <button class="btn btn-primary" onclick="abrirFormCadastrante()">+ Novo Cadastrante</button>
+      </div>
+      <div id="msg-cadastrantes"></div>
+      <div class="card"><div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-striped mb-0">
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Cargo</th><th>Cadastros</th><th>Ações</th></tr></thead>
+            <tbody id="tabela-cadastrantes"></tbody>
+          </table>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ===== VIEW FORM CADASTRANTE ===== -->
+    <div id="view-form-cadastrante" class="hidden">
+      <h2 id="titulo-form-cadastrante">Novo Cadastrante</h2>
+      <div id="msg-form-cadastrante"></div>
+      <div class="card"><div class="card-body">
+        <form id="form-cadastrante" onsubmit="salvarCadastrante(event)">
+          <input type="hidden" id="cadastrante-id">
+          <div class="row">
+            <div class="col-12 col-md-6 mb-3"><label class="form-label">Nome *</label>
+              <input type="text" class="form-control" id="cadastrante-nome" required></div>
+            <div class="col-12 col-md-6 mb-3"><label class="form-label">E-mail</label>
+              <input type="email" class="form-control" id="cadastrante-email"></div>
+            <div class="col-12 col-md-6 mb-3"><label class="form-label">Telefone</label>
+              <input type="text" class="form-control" id="cadastrante-telefone" inputmode="numeric" maxlength="15" placeholder="(99) 99999-9999"></div>
+            <div class="col-12 col-md-6 mb-3"><label class="form-label">Cargo / Função</label>
+              <input type="text" class="form-control" id="cadastrante-cargo" placeholder="Ex: Atendente"></div>
+          </div>
+          <button type="submit" class="btn btn-success">💾 Salvar</button>
+          <button type="button" class="btn btn-secondary" onclick="showView('cadastrantes')">Cancelar</button>
+        </form>
+      </div></div>
+    </div>
+
+    <!-- ===== VIEW LINKS ===== -->
+    <div id="view-links" class="hidden">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+        <h2 class="mb-0">Links de <span id="links-pessoa-nome"></span></h2>
+        <button class="btn btn-secondary" onclick="showView('pessoas')">Voltar</button>
+      </div>
+      <div class="card"><div class="card-body" id="lista-links"></div></div>
+    </div>
+
+    <!-- ===== VIEW DOCS ===== -->
+    <div id="view-docs" class="hidden">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+        <h2 class="mb-0">Documentos de <span id="docs-pessoa-nome"></span></h2>
+        <button class="btn btn-secondary" onclick="showView('pessoas')">Voltar</button>
+      </div>
+      <div class="card"><div class="card-body" id="lista-docs"></div></div>
+    </div>
+
+    <!-- ===== VIEW FICHA IMPRESSA ===== -->
+    <div id="view-ficha" class="hidden">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2 no-print">
+        <h2 class="mb-0">🖨 Ficha</h2>
+        <div class="d-flex gap-2">
+          <button class="btn btn-success" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+          <button class="btn btn-secondary" onclick="showView('pessoas')">Voltar</button>
+        </div>
+      </div>
+      <div id="ficha-conteudo"></div>
+    </div>
+
+  </div><!-- /app-main -->
+</div><!-- /app-container -->
+
+<!-- ===== MODAIS ===== -->
+<div class="modal fade" id="modalDrive" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">📁 Adicionar link do Google Drive</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <a href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+            🌐 Abrir Google Drive
+          </a>
+        </div>
+        <hr>
+        <div class="mb-2"><label class="form-label">Título</label>
+          <input type="text" class="form-control" id="drive-titulo"></div>
+        <div class="mb-2"><label class="form-label">Link</label>
+          <input type="url" class="form-control" id="drive-url" placeholder="https://drive.google.com/..."></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success" onclick="confirmarDrive()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalDocumento" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">📄 Qual documento?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-grid gap-2">
+          <button class="btn btn-outline-primary" onclick="escolherTipoDoc('RG')">RG</button>
+          <button class="btn btn-outline-primary" onclick="escolherTipoDoc('CPF')">CPF</button>
+          <button class="btn btn-outline-primary" onclick="escolherTipoDoc('CNH')">CNH</button>
+          <button class="btn btn-outline-primary" onclick="escolherTipoDoc('Passaporte')">Passaporte</button>
+          <button class="btn btn-outline-primary" onclick="escolherTipoDoc('Comprovante')">Comprovante de residência</button>
+          <button class="btn btn-outline-secondary" onclick="escolherTipoDoc('Outro')">Outro</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalPreviewDoc" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="preview-titulo">Confirmar foto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="cancelarPreview()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="doc-preview">
+          <img id="preview-img" src="" alt="Pré-visualização">
+          <p class="text-center small text-muted mb-0" id="preview-info"></p>
+        </div>
+      </div>
+      <div class="modal-footer flex-wrap gap-1">
+        <button type="button" class="btn btn-outline-danger" onclick="refazerPreview()">📷 Refazer</button>
+        <button type="button" class="btn btn-outline-primary" onclick="salvarPreviewLocal()">💾 Salvar no celular</button>
+        <button type="button" class="btn btn-success" onclick="confirmarPreview()">✅ Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalVisualizar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="visualizar-titulo">Visualizar arquivo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="visualizar-corpo"></div>
+      <div class="modal-footer">
+        <a id="btn-abrir-nova-aba" class="btn btn-outline-primary" target="_blank" rel="noopener">🌐 Abrir em nova aba</a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalRelatorio" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">📊 Relatório de Cadastros</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="relatorio-corpo">
+        <p class="text-muted text-center">Gerando relatório...</p>
+      </div>
+      <div class="modal-footer flex-wrap gap-1">
+        <button type="button" class="btn btn-outline-success" onclick="exportarRelatorioCSV()">📥 Baixar CSV</button>
+        <button type="button" class="btn btn-outline-primary" onclick="window.print()">🖨 Imprimir</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="input-camera-frente" accept="image/*,application/pdf" capture="environment" class="hidden" onchange="processarDocFrente(this)">
+<input type="file" id="input-camera-verso"  accept="image/*,application/pdf" capture="environment" class="hidden" onchange="processarDocVerso(this)">
+<input type="file" id="input-upload-doc" accept="image/*,application/pdf" class="hidden" onchange="processarDocUpload(this)">
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, doc, addDoc, getDoc, getDocs,
+  updateDoc, deleteDoc, query, where
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDxki0rE8j3q1vBr8-WaqJuWPlJN43N6H4",
+  authDomain: "phdigital---saas.firebaseapp.com",
+  projectId: "phdigital---saas",
+  storageBucket: "phdigital---saas.firebasestorage.app",
+  messagingSenderId: "1087099742876",
+  appId: "1:1087099742876:web:84072ef377f6a6cb3c1b59"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const CLOUDINARY_CLOUD_NAME = "p5iqxpmd";
+const CLOUDINARY_UPLOAD_PRESET = "sistema_cadastro_unsigned";
+
+/* ⚠️ Senha master (atalho Shift+P na tela de login) */
+const SENHA_MASTER_ADMIN = "PROMATEC2024";
+
+/* ============================================================
+   LOGIN / LOGOUT
+   ============================================================ */
+window.fazerLogin = async function(e) {
+  e.preventDefault();
+  const msg = document.getElementById('msg-login');
+  const btn = document.getElementById('btn-login');
+  msg.innerHTML = '';
+
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  const senhaAdmin = document.getElementById('login-senha-admin').value;
+
+  btn.disabled = true;
+  btn.textContent = 'ENTRANDO...';
+
+  try {
+    if (senhaAdmin && senhaAdmin !== SENHA_MASTER_ADMIN) {
+      throw new Error('Senha master incorreta.');
+    }
+    // Login normal — após autenticar, o onAuthStateChanged mostra o app
+    await signInWithEmailAndPassword(auth, email, senha);
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'ENTRAR';
+    let texto = 'E-mail ou senha inválidos.';
+    if (err.code === 'auth/user-not-found') texto = 'Usuário não encontrado.';
+    else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') texto = 'Senha incorreta.';
+    else if (err.code === 'auth/too-many-requests') texto = 'Muitas tentativas. Tente mais tarde.';
+    else if (err.code === 'auth/invalid-email') texto = 'E-mail inválido.';
+    else if (err.code === 'auth/network-request-failed') texto = 'Sem conexão.';
+    else if (err.message) texto = err.message;
+    msg.innerHTML = `<div class="alert alert-danger py-2 small mb-0">${esc(texto)}</div>`;
+  }
+};
+
+window.fazerLogout = async function() {
+  try {
+    await signOut(auth);
+    location.reload();
+  } catch (err) {
+    alert('Erro ao sair: ' + err.message);
+  }
+};
+
+/* Atalho secreto Shift + P */
+document.addEventListener('keydown', (e) => {
+  const telaLogin = document.getElementById('tela-login');
+  if (!telaLogin || telaLogin.classList.contains('hidden')) return;
+  if (e.shiftKey && (e.key === 'P' || e.key === 'p')) {
+    const campo = document.getElementById('campo-admin-secreto');
+    campo.classList.toggle('hidden');
+    if (!campo.classList.contains('hidden')) {
+      document.getElementById('login-senha-admin').focus();
+    }
+  }
+});
+
+/* Auth State — mostra app ou tela de login */
+onAuthStateChanged(auth, (user) => {
+  const telaLogin = document.getElementById('tela-login');
+  const appContainer = document.getElementById('app-container');
+
+  if (!user) {
+    telaLogin.classList.remove('hidden');
+    appContainer.classList.add('hidden');
+    return;
+  }
+
+  // Usuário logado → mostra app e roda init
+  telaLogin.classList.add('hidden');
+  appContainer.classList.remove('hidden');
+  document.getElementById('navbar-nome').textContent = user.email;
+
+  // Evita reinit duplicado
+  if (!window.__appIniciado) {
+    window.__appIniciado = true;
+    iniciarApp();
+  }
+});
+
+/* ============================================================
+   INIT DO APP (só após login)
+   ============================================================ */
+async function iniciarApp() {
+  aplicarMascara(document.getElementById('pessoa-cpf'), mascaraCPF);
+  aplicarMascara(document.getElementById('pessoa-telefone'), mascaraTelefone);
+  aplicarMascara(document.getElementById('cadastrante-telefone'), mascaraTelefone);
+  aplicarMascara(document.getElementById('servico-valor'), mascaraMoeda);
+  await testarConexao();
+  showView('pessoas');
+}
+
+/* ============================================================
+   CACHE
+   ============================================================ */
+let cachePessoas = [];
+let cacheCategorias = [];
+let cacheCadastrantes = [];
+let cacheServicos = [];
+let pessoasSelecionadas = new Set();
+
+/* ============================================================
+   MÁSCARAS
+   ============================================================ */
+function mascaraCPF(valor) {
+  return valor.replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    .slice(0, 14);
+}
+function mascaraTelefone(valor) {
+  const nums = valor.replace(/\D/g, '').slice(0, 11);
+  if (nums.length <= 10) {
+    return nums.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d{1,4})$/, '$1-$2');
+  }
+  return nums.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d{1,4})$/, '$1-$2');
+}
+function mascaraMoeda(valor) {
+  let nums = valor.replace(/\D/g, '');
+  if (!nums) return '';
+  const n = parseInt(nums, 10);
+  return (n / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function aplicarMascara(inputEl, fnMascara) {
+  inputEl.addEventListener('input', () => {
+    const pos = inputEl.selectionStart;
+    const antes = inputEl.value;
+    inputEl.value = fnMascara(inputEl.value);
+    if (antes !== inputEl.value) {
+      const delta = inputEl.value.length - antes.length;
+      inputEl.setSelectionRange(pos + delta, pos + delta);
+    }
+  });
+  inputEl.addEventListener('blur', () => { inputEl.value = fnMascara(inputEl.value); });
+}
+
+function formatarMoeda(n) {
+  const v = Number(n);
+  if (isNaN(v)) return 'R$ 0,00';
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+function parseMoedaBR(str) {
+  if (typeof str === 'number') return str;
+  if (!str) return 0;
+  const limpo = String(str).replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '');
+  const n = parseFloat(limpo);
+  return isNaN(n) ? 0 : n;
+}
+
+/* ============================================================
+   ESTADO DOCUMENTOS
+   ============================================================ */
+let documentosTemp = [];
+let docEmEdicao = { tipo: null, frenteUrl: null, versoUrl: null, etapa: null, arquivoAtual: null, previewUrl: null };
+
+/* ============================================================
+   URL VISUALIZAÇÃO
+   ============================================================ */
+function urlVisualizacao(url) {
+  if (!url) return url;
+  if (!url.includes('res.cloudinary.com')) return url;
+  if (/\/upload\/fl_[^/]+\//.test(url)) {
+    return url.replace(/\/upload\/fl_[^/]+\//, '/upload/fl_inline/');
+  }
+  return url.replace('/upload/', '/upload/fl_inline/');
+}
+window.abrirVisualizador = function(url, titulo) {
+  if (!url) { alert('Arquivo não disponível.'); return; }
+  const urlView = urlVisualizacao(url);
+  const modal = new bootstrap.Modal(document.getElementById('modalVisualizar'));
+  document.getElementById('visualizar-titulo').textContent = titulo || 'Visualizar arquivo';
+  const corpo = document.getElementById('visualizar-corpo');
+  document.getElementById('btn-abrir-nova-aba').href = urlView;
+  const ehPdf = urlView.toLowerCase().includes('.pdf');
+  if (ehPdf) {
+    corpo.innerHTML = `<iframe src="${urlView}" style="width:100%;height:70vh;border:0;border-radius:6px;background:#fff;"></iframe>`;
+  } else {
+    corpo.innerHTML = `<img src="${urlView}" alt="Visualização" style="max-width:100%;max-height:70vh;display:block;margin:0 auto;border-radius:6px;">`;
+  }
+  modal.show();
+};
+
+/* ============================================================
+   STATUS
+   ============================================================ */
+function setStatus(tipo, msg) {
+  const el = document.getElementById('status-conexao');
+  const cores = { ok: 'bg-success', erro: 'bg-danger', info: 'bg-secondary', aviso: 'bg-warning text-dark' };
+  el.className = cores[tipo] + ' text-white';
+  if (tipo === 'aviso') el.className = 'bg-warning text-dark';
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+async function testarConexao() {
+  try {
+    const snap = await getDocs(collection(db, 'categorias'));
+    setStatus('ok', `✅ Conectado · ${snap.size} categoria(s)`);
+    return true;
+  } catch (err) {
+    let dica = err.message;
+    if (err.code === 'permission-denied') dica = "❌ Permission denied. Publique as regras no Firebase.";
+    else if (err.code === 'unavailable') dica = "❌ Sem conexão.";
+    setStatus('erro', dica);
+    return false;
+  }
+}
+
+/* ============================================================
+   NAVEGAÇÃO
+   ============================================================ */
+window.showView = function(name) {
+  document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
+  document.getElementById('view-' + name).classList.remove('hidden');
+  if (name === 'pessoas') renderPessoas();
+  if (name === 'servicos') renderServicos();
+  if (name === 'categorias') renderCategorias();
+  if (name === 'cadastrantes') renderCadastrantes();
+  const menu = document.getElementById('navMenu');
+  if (menu && menu.classList.contains('show')) {
+    bootstrap.Collapse.getInstance(menu)?.hide();
+  }
+};
+
+/* ============================================================
+   PDF + UPLOAD
+   ============================================================ */
+function imagemParaPdfBlob(file) {
+  return new Promise((resolve, reject) => {
+    if (file.type === 'application/pdf') { resolve(file); return; }
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('Tipo não permitido. Use imagem ou PDF.'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageW = 210, pageH = 297, margin = 10;
+        const maxW = pageW - margin * 2, maxH = pageH - margin * 2;
+        const ratio = Math.min(maxW / img.width, maxH / img.height);
+        const w = img.width * ratio, h = img.height * ratio;
+        pdf.addImage(e.target.result, 'JPEG', (pageW - w) / 2, (pageH - h) / 2, w, h);
+        pdf.setTextColor(220, 220, 220);
+        pdf.setFontSize(48);
+        pdf.text('USO INTERNO', 105, 150, { align: 'center', angle: 45 });
+        resolve(new File([pdf.output('blob')], file.name.replace(/\.[^.]+$/, '') + '.pdf', { type: 'application/pdf' }));
+      };
+      img.onerror = () => reject(new Error('Imagem inválida'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('Falha ao ler arquivo'));
+    reader.readAsDataURL(file);
+  });
+}
+async function uploadParaCloudinary(file) {
+  if (file.size > 10 * 1024 * 1024) throw new Error(`"${file.name}" excede 10MB.`);
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+  const resp = await fetch(endpoint, { method: 'POST', body: formData });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error('Cloudinary: ' + (err.error?.message || resp.statusText));
+  }
+  const data = await resp.json();
+  return data.secure_url;
+}
+
+/* ============================================================
+   SALVAR NO CELULAR
+   ============================================================ */
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+async function salvarNoCelular(fileOrUrl, nomeArquivo) {
+  try {
+    let url;
+    let objectUrlCriada = false;
+    if (typeof fileOrUrl === 'string') {
+      const resp = await fetch(fileOrUrl);
+      if (!resp.ok) throw new Error('Falha ao baixar arquivo');
+      const blob = await resp.blob();
+      url = URL.createObjectURL(blob);
+      objectUrlCriada = true;
+    } else {
+      url = URL.createObjectURL(fileOrUrl);
+      objectUrlCriada = true;
+    }
+    const nome = nomeArquivo || 'documento.pdf';
+    const extensao = nome.split('.').pop().toLowerCase();
+    const ehImagem = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extensao);
+
+    if (isIOS()) {
+      const win = window.open(url, '_blank');
+      if (!win) alert('Permita pop-ups para este site.');
+      else mostrarInstrucaoIOS(ehImagem);
+      setTimeout(() => { if (objectUrlCriada) URL.revokeObjectURL(url); }, 30000);
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = url; a.download = nome;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => { if (objectUrlCriada) URL.revokeObjectURL(url); }, 3000);
+    mostrarToast(`✅ Arquivo enviado para Downloads`, 'success');
+  } catch (err) { alert('Não foi possível salvar: ' + err.message); }
+}
+function mostrarInstrucaoIOS(ehImagem) {
+  const antiga = document.getElementById('ios-instrucao');
+  if (antiga) antiga.remove();
+  const div = document.createElement('div');
+  div.id = 'ios-instrucao';
+  div.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+    background:rgba(0,0,0,.85);color:#fff;padding:12px 20px;border-radius:10px;
+    z-index:10000;max-width:90%;font-size:.9rem;text-align:center;line-height:1.4;`;
+  div.innerHTML = ehImagem
+    ? '📱 <strong>Toque e segure na imagem</strong><br>e escolha <em>"Salvar em Fotos"</em>'
+    : '📱 <strong>Toque no ícone de compartilhar</strong> ⬆️<br>e escolha <em>"Salvar em Arquivos"</em>';
+  document.body.appendChild(div);
+  setTimeout(() => { div.remove(); }, 6000);
+}
+function mostrarToast(msg, tipo = 'info') {
+  const cores = { success: '#198754', danger: '#dc3545', info: '#0d6efd' };
+  const toast = document.createElement('div');
+  toast.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+    background:${cores[tipo] || cores.info};color:#fff;padding:10px 18px;
+    border-radius:8px;z-index:10000;font-size:.9rem;
+    box-shadow:0 4px 12px rgba(0,0,0,.25);opacity:0;transition:opacity .3s;`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => { toast.style.opacity = '1'; });
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2500);
+}
+
+/* ============================================================
+   FLUXO DOCUMENTO
+   ============================================================ */
+window.abrirModalDocumento = function() {
+  docEmEdicao = { tipo: null, frenteUrl: null, versoUrl: null, etapa: null, arquivoAtual: null, previewUrl: null };
+  new bootstrap.Modal(document.getElementById('modalDocumento')).show();
+};
+window.escolherTipoDoc = function(tipo) {
+  docEmEdicao.tipo = tipo;
+  bootstrap.Modal.getInstance(document.getElementById('modalDocumento')).hide();
+  document.getElementById('input-camera-frente').click();
+};
+function receberArquivo(file) {
+  if (!file) return;
+  if (docEmEdicao.previewUrl) URL.revokeObjectURL(docEmEdicao.previewUrl);
+  docEmEdicao.arquivoAtual = file;
+  docEmEdicao.previewUrl = URL.createObjectURL(file);
+  const modal = new bootstrap.Modal(document.getElementById('modalPreviewDoc'));
+  document.getElementById('preview-img').src = docEmEdicao.previewUrl;
+  document.getElementById('preview-titulo').textContent =
+    `${docEmEdicao.tipo} — ${docEmEdicao.etapa === 'verso' ? 'Verso' : 'Frente'}`;
+  document.getElementById('preview-info').textContent =
+    file.type === 'application/pdf' ? '📄 PDF selecionado' : '📷 Foto selecionada';
+  modal.show();
+}
+window.processarDocFrente = function(input) {
+  const file = input.files[0]; input.value = '';
+  if (!file) return;
+  docEmEdicao.etapa = 'frente'; receberArquivo(file);
+};
+window.processarDocVerso = function(input) {
+  const file = input.files[0]; input.value = '';
+  if (!file) return;
+  docEmEdicao.etapa = 'verso'; receberArquivo(file);
+};
+window.processarDocUpload = function(input) {
+  const file = input.files[0]; input.value = '';
+  if (!file) return;
+  receberArquivo(file);
+};
+window.refazerPreview = function() {
+  bootstrap.Modal.getInstance(document.getElementById('modalPreviewDoc')).hide();
+  if (docEmEdicao.etapa === 'verso') document.getElementById('input-camera-verso').click();
+  else document.getElementById('input-camera-frente').click();
+};
+window.cancelarPreview = function() {
+  if (docEmEdicao.previewUrl) { URL.revokeObjectURL(docEmEdicao.previewUrl); docEmEdicao.previewUrl = null; }
+  docEmEdicao.arquivoAtual = null;
+};
+window.salvarPreviewLocal = function() {
+  const file = docEmEdicao.arquivoAtual;
+  if (!file) { alert('Nenhum arquivo para salvar.'); return; }
+  const ext = file.type === 'application/pdf' ? 'pdf' : (file.name.split('.').pop() || 'jpg');
+  salvarNoCelular(file, `${docEmEdicao.tipo || 'documento'}_${docEmEdicao.etapa || 'frente'}_${Date.now()}.${ext}`);
+};
+window.confirmarPreview = async function() {
+  const file = docEmEdicao.arquivoAtual;
+  if (!file) return;
+  bootstrap.Modal.getInstance(document.getElementById('modalPreviewDoc')).hide();
+  const msgForm = document.getElementById('msg-form-pessoa');
+  const spinner = document.createElement('div');
+  spinner.className = 'alert alert-info';
+  spinner.innerHTML = `📤 Enviando ${docEmEdicao.tipo} (${docEmEdicao.etapa})...`;
+  msgForm.appendChild(spinner);
+  try {
+    const pdf = await imagemParaPdfBlob(file);
+    const url = await uploadParaCloudinary(pdf);
+    if (docEmEdicao.etapa === 'frente') {
+      docEmEdicao.frenteUrl = url;
+      if (['RG', 'CNH', 'Passaporte'].includes(docEmEdicao.tipo)) {
+        spinner.remove();
+        if (confirm(`Deseja anexar o VERSO do ${docEmEdicao.tipo} também?`)) {
+          document.getElementById('input-camera-verso').click();
+          return;
+        }
+      }
+      finalizarDocumento();
+    } else {
+      docEmEdicao.versoUrl = url;
+      finalizarDocumento();
+    }
+    spinner.remove();
+  } catch (err) {
+    spinner.remove();
+    msgForm.innerHTML = `<div class="alert alert-danger">Erro no upload: ${esc(err.message)}</div>`;
+    setTimeout(() => { msgForm.innerHTML = ''; }, 5000);
+  }
+};
+function finalizarDocumento() {
+  if (!docEmEdicao.frenteUrl) { alert('Nenhuma imagem da frente foi enviada.'); return; }
+  documentosTemp.push({
+    id: 'doc_' + Date.now(),
+    tipo: docEmEdicao.tipo,
+    frenteUrl: docEmEdicao.frenteUrl,
+    versoUrl: docEmEdicao.versoUrl || null,
+    status: 'pendente',
+    enviadoEm: new Date().toISOString()
+  });
+  renderDocumentosTemp();
+  if (docEmEdicao.previewUrl) URL.revokeObjectURL(docEmEdicao.previewUrl);
+  docEmEdicao = { tipo: null, frenteUrl: null, versoUrl: null, etapa: null, arquivoAtual: null, previewUrl: null };
+  const msgForm = document.getElementById('msg-form-pessoa');
+  msgForm.innerHTML = `<div class="alert alert-success">✅ Documento anexado.</div>`;
+  setTimeout(() => { msgForm.innerHTML = ''; }, 4000);
+}
+function renderDocumentosTemp() {
+  const container = document.getElementById('documentos-container');
+  if (documentosTemp.length === 0) {
+    container.innerHTML = '<p class="text-muted small mb-2">Nenhum documento anexado ainda.</p>';
+    return;
+  }
+  container.innerHTML = documentosTemp.map(d => {
+    const badge = d.status === 'validado'
+      ? '<span class="doc-badge validado">validado</span>'
+      : '<span class="doc-badge pendente">pendente</span>';
+    const versoBtn = d.versoUrl
+      ? `<button class="btn btn-sm btn-outline-secondary" onclick="abrirVisualizador('${esc(d.versoUrl)}', '${esc(d.tipo)} — Verso')">👁 Ver verso</button>`
+      : '';
+    const versoSalvarBtn = d.versoUrl
+      ? `<button class="btn btn-sm btn-outline-success" onclick="salvarDocLocal('${d.id}', 'verso')">💾 Verso</button>`
+      : '';
+    return `
+      <div class="doc-card">
+        <div class="doc-info">
+          <div class="doc-tipo">${esc(d.tipo)} ${badge}</div>
+          <div class="doc-meta">Anexado em ${new Date(d.enviadoEm).toLocaleString('pt-BR')}</div>
+        </div>
+        <div class="doc-actions">
+          <button class="btn btn-sm btn-primary" onclick="abrirVisualizador('${esc(d.frenteUrl)}', '${esc(d.tipo)} — Frente')">👁 Ver frente</button>
+          ${versoBtn}
+          <button class="btn btn-sm btn-outline-success" onclick="salvarDocLocal('${d.id}', 'frente')">💾 Frente</button>
+          ${versoSalvarBtn}
+          <button class="btn btn-sm btn-outline-warning" onclick="toggleStatusDoc('${d.id}')">
+            ${d.status === 'validado' ? 'Marcar pendente' : 'Marcar validado'}
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="removerDocTemp('${d.id}')">X</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+window.toggleStatusDoc = function(id) {
+  const d = documentosTemp.find(x => x.id === id);
+  if (!d) return;
+  d.status = d.status === 'validado' ? 'pendente' : 'validado';
+  renderDocumentosTemp();
+};
+window.removerDocTemp = function(id) {
+  if (!confirm('Remover este documento?')) return;
+  documentosTemp = documentosTemp.filter(x => x.id !== id);
+  renderDocumentosTemp();
+};
+window.salvarDocLocal = function(docId, lado) {
+  const d = documentosTemp.find(x => x.id === docId);
+  if (!d) return;
+  const url = lado === 'verso' ? d.versoUrl : d.frenteUrl;
+  if (!url) { alert('Arquivo não disponível.'); return; }
+  salvarNoCelular(urlVisualizacao(url), `${d.tipo}_${lado}_${Date.now()}.pdf`);
+};
+
+/* ============================================================
+   DRIVE
+   ============================================================ */
+window.abrirAtalhoDrive = function() {
+  document.getElementById('drive-titulo').value = '';
+  document.getElementById('drive-url').value = '';
+  new bootstrap.Modal(document.getElementById('modalDrive')).show();
+};
+window.confirmarDrive = function() {
+  const titulo = document.getElementById('drive-titulo').value.trim() || 'Google Drive';
+  const url = document.getElementById('drive-url').value.trim();
+  if (!url) { alert('Cole o link do Drive.'); return; }
+  if (!/^https?:\/\//i.test(url)) { alert('O link deve começar com http:// ou https://'); return; }
+  addLinkRow(titulo, url);
+  bootstrap.Modal.getInstance(document.getElementById('modalDrive')).hide();
+};
+
+/* ============================================================
+   SERVIÇOS
+   ============================================================ */
+async function renderServicos() {
+  const tbody = document.getElementById('tabela-servicos');
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Carregando...</td></tr>';
+  try {
+    const [sSnap, pSnap] = await Promise.all([
+      getDocs(collection(db, 'servicos')),
+      getDocs(collection(db, 'pessoas'))
+    ]);
+    cacheServicos = sSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const pessoas = pSnap.docs.map(d => d.data());
+    if (cacheServicos.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhum serviço. Clique em "+ Novo Serviço".</td></tr>';
+      return;
+    }
+    cacheServicos.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    tbody.innerHTML = cacheServicos.map(s => {
+      const total = pessoas.filter(p => p.servicoId === s.id).length;
+      const badge = s.ativo === false
+        ? '<span class="badge bg-secondary">Inativo</span>'
+        : '<span class="badge bg-success">Ativo</span>';
+      return `<tr>
+        <td>${esc(s.nome)}</td>
+        <td>${esc(s.descricao || '')}</td>
+        <td class="text-end">${formatarMoeda(s.valor)}</td>
+        <td>${badge}</td>
+        <td>${total}</td>
+        <td>
+          <button class="btn btn-sm btn-warning" onclick="abrirFormServico('${s.id}')">Editar</button>
+          <button class="btn btn-sm btn-danger" onclick="excluirServico('${s.id}')">Excluir</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-danger">Erro (${err.code}): ${esc(err.message)}</td></tr>`;
+  }
+}
+window.abrirFormServico = async function(id = null) {
+  document.getElementById('form-servico').reset();
+  document.getElementById('servico-id').value = '';
+  document.getElementById('titulo-form-servico').textContent = 'Novo Serviço';
+  document.getElementById('msg-form-servico').innerHTML = '';
+  if (id) {
+    try {
+      const snap = await getDoc(doc(db, 'servicos', id));
+      if (snap.exists()) {
+        const s = snap.data();
+        document.getElementById('servico-id').value = id;
+        document.getElementById('servico-nome').value = s.nome || '';
+        document.getElementById('servico-desc').value = s.descricao || '';
+        document.getElementById('servico-valor').value = mascaraMoeda(String(Math.round((Number(s.valor) || 0) * 100)));
+        document.getElementById('servico-ativo').value = s.ativo === false ? 'false' : 'true';
+        document.getElementById('titulo-form-servico').textContent = 'Editar Serviço';
+      }
+    } catch (err) {}
+  }
+  showView('form-servico');
+};
+window.salvarServico = async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('servico-id').value;
+  const valorNum = parseMoedaBR(document.getElementById('servico-valor').value);
+  const dados = {
+    nome: document.getElementById('servico-nome').value.trim(),
+    descricao: document.getElementById('servico-desc').value.trim(),
+    valor: valorNum,
+    ativo: document.getElementById('servico-ativo').value === 'true'
+  };
+  if (!dados.nome) return;
+  if (valorNum < 0) { alert('Valor inválido.'); return; }
+  try {
+    if (id) await updateDoc(doc(db, 'servicos', id), dados);
+    else await addDoc(collection(db, 'servicos'), { ...dados, criadoEm: new Date() });
+    showView('servicos');
+  } catch (err) {
+    document.getElementById('msg-form-servico').innerHTML =
+      `<div class="alert alert-danger">Erro: ${esc(err.message)}</div>`;
+  }
+};
+window.excluirServico = async function(id) {
+  if (!confirm('Excluir serviço? As pessoas vinculadas manterão o valor histórico.')) return;
+  try {
+    await deleteDoc(doc(db, 'servicos', id));
+    renderServicos();
+  } catch (err) { alert('Erro: ' + err.message); }
+};
+
+/* ============================================================
+   CATEGORIAS
+   ============================================================ */
+async function renderCategorias() {
+  const tbody = document.getElementById('tabela-categorias');
+  tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Carregando...</td></tr>';
+  try {
+    const [cSnap, pSnap] = await Promise.all([
+      getDocs(collection(db, 'categorias')),
+      getDocs(collection(db, 'pessoas'))
+    ]);
+    cacheCategorias = cSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const pessoas = pSnap.docs.map(d => d.data());
+    if (cacheCategorias.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma categoria.</td></tr>';
+      return;
+    }
+    cacheCategorias.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    tbody.innerHTML = cacheCategorias.map(c => {
+      const total = pessoas.filter(p => p.categoriaId === c.id).length;
+      return `<tr><td>${esc(c.nome)}</td><td>${esc(c.descricao || '')}</td><td>${total}</td>
+        <td><button class="btn btn-sm btn-warning" onclick="abrirFormCategoria('${c.id}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="excluirCategoria('${c.id}')">Excluir</button></td></tr>`;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-danger">Erro (${err.code}): ${esc(err.message)}</td></tr>`;
+  }
+}
+window.abrirFormCategoria = async function(id = null) {
+  document.getElementById('form-categoria').reset();
+  document.getElementById('categoria-id').value = '';
+  document.getElementById('titulo-form-categoria').textContent = 'Nova Categoria';
+  document.getElementById('msg-form-categoria').innerHTML = '';
+  if (id) {
+    try {
+      const snap = await getDoc(doc(db, 'categorias', id));
+      if (snap.exists()) {
+        const c = snap.data();
+        document.getElementById('categoria-id').value = id;
+        document.getElementById('categoria-nome').value = c.nome;
+        document.getElementById('categoria-desc').value = c.descricao || '';
+        document.getElementById('titulo-form-categoria').textContent = 'Editar Categoria';
+      }
+    } catch (err) {}
+  }
+  showView('form-categoria');
+};
+window.salvarCategoria = async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('categoria-id').value;
+  const nome = document.getElementById('categoria-nome').value.trim();
+  const descricao = document.getElementById('categoria-desc').value.trim();
+  if (!nome) return;
+  try {
+    if (id) await updateDoc(doc(db, 'categorias', id), { nome, descricao });
+    else await addDoc(collection(db, 'categorias'), { nome, descricao, criadoEm: new Date() });
+    showView('categorias');
+  } catch (err) {
+    document.getElementById('msg-form-categoria').innerHTML =
+      `<div class="alert alert-danger">Erro: ${esc(err.message)}</div>`;
+  }
+};
+window.excluirCategoria = async function(id) {
+  if (!confirm('Excluir categoria?')) return;
+  try {
+    const q = query(collection(db, 'pessoas'), where('categoriaId', '==', id));
+    const snap = await getDocs(q);
+    for (const d of snap.docs) await updateDoc(doc(db, 'pessoas', d.id), { categoriaId: null });
+    await deleteDoc(doc(db, 'categorias', id));
+    renderCategorias();
+  } catch (err) { alert('Erro: ' + err.message); }
+};
+
+/* ============================================================
+   CADASTRANTES
+   ============================================================ */
+async function renderCadastrantes() {
+  const tbody = document.getElementById('tabela-cadastrantes');
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Carregando...</td></tr>';
+  try {
+    const [cdSnap, pSnap] = await Promise.all([
+      getDocs(collection(db, 'cadastrantes')),
+      getDocs(collection(db, 'pessoas'))
+    ]);
+    cacheCadastrantes = cdSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const pessoas = pSnap.docs.map(d => d.data());
+    if (cacheCadastrantes.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhum cadastrante.</td></tr>';
+      return;
+    }
+    cacheCadastrantes.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    tbody.innerHTML = cacheCadastrantes.map(c => {
+      const total = pessoas.filter(p => p.cadastranteId === c.id).length;
+      return `<tr>
+        <td>${esc(c.nome)}</td>
+        <td>${esc(c.email || '-')}</td>
+        <td>${esc(c.telefone || '-')}</td>
+        <td>${esc(c.cargo || '-')}</td>
+        <td>${total}</td>
+        <td>
+          <button class="btn btn-sm btn-warning" onclick="abrirFormCadastrante('${c.id}')">Editar</button>
+          <button class="btn btn-sm btn-danger" onclick="excluirCadastrante('${c.id}')">Excluir</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-danger">Erro (${err.code}): ${esc(err.message)}</td></tr>`;
+  }
+}
+window.abrirFormCadastrante = async function(id = null) {
+  document.getElementById('form-cadastrante').reset();
+  document.getElementById('cadastrante-id').value = '';
+  document.getElementById('titulo-form-cadastrante').textContent = 'Novo Cadastrante';
+  document.getElementById('msg-form-cadastrante').innerHTML = '';
+  if (id) {
+    try {
+      const snap = await getDoc(doc(db, 'cadastrantes', id));
+      if (snap.exists()) {
+        const c = snap.data();
+        document.getElementById('cadastrante-id').value = id;
+        document.getElementById('cadastrante-nome').value = c.nome || '';
+        document.getElementById('cadastrante-email').value = c.email || '';
+        document.getElementById('cadastrante-telefone').value = mascaraTelefone(c.telefone || '');
+        document.getElementById('cadastrante-cargo').value = c.cargo || '';
+        document.getElementById('titulo-form-cadastrante').textContent = 'Editar Cadastrante';
+      }
+    } catch (err) {}
+  }
+  showView('form-cadastrante');
+};
+window.salvarCadastrante = async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('cadastrante-id').value;
+  const dados = {
+    nome: document.getElementById('cadastrante-nome').value.trim(),
+    email: document.getElementById('cadastrante-email').value.trim(),
+    telefone: document.getElementById('cadastrante-telefone').value.trim(),
+    cargo: document.getElementById('cadastrante-cargo').value.trim()
+  };
+  if (!dados.nome) return;
+  try {
+    if (id) await updateDoc(doc(db, 'cadastrantes', id), dados);
+    else await addDoc(collection(db, 'cadastrantes'), { ...dados, criadoEm: new Date() });
+    showView('cadastrantes');
+  } catch (err) {
+    document.getElementById('msg-form-cadastrante').innerHTML =
+      `<div class="alert alert-danger">Erro: ${esc(err.message)}</div>`;
+  }
+};
+window.excluirCadastrante = async function(id) {
+  if (!confirm('Excluir cadastrante? As pessoas ficarão sem cadastrante.')) return;
+  try {
+    const q = query(collection(db, 'pessoas'), where('cadastranteId', '==', id));
+    const snap = await getDocs(q);
+    for (const d of snap.docs) await updateDoc(doc(db, 'pessoas', d.id), { cadastranteId: null });
+    await deleteDoc(doc(db, 'cadastrantes', id));
+    renderCadastrantes();
+  } catch (err) { alert('Erro: ' + err.message); }
+};
+
+/* ============================================================
+   PESSOAS + FILTROS
+   ============================================================ */
+async function renderPessoas() {
+  const tbody = document.getElementById('tabela-pessoas');
+  tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">Carregando...</td></tr>';
+  try {
+    const [pSnap, cSnap, cdSnap, sSnap] = await Promise.all([
+      getDocs(collection(db, 'pessoas')),
+      getDocs(collection(db, 'categorias')),
+      getDocs(collection(db, 'cadastrantes')),
+      getDocs(collection(db, 'servicos'))
+    ]);
+    cachePessoas = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    cacheCategorias = cSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    cacheCadastrantes = cdSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    cacheServicos = sSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    popularFiltros();
+    aplicarFiltros();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="10" class="text-danger">Erro (${err.code}): ${esc(err.message)}</td></tr>`;
+  }
+}
+
+function popularFiltros() {
+  const selCat = document.getElementById('filtro-categoria');
+  const catAtual = selCat.value;
+  selCat.innerHTML = '<option value="">Todas</option>' +
+    cacheCategorias.slice().sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
+      .map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join('');
+  selCat.value = catAtual;
+
+  const selCd = document.getElementById('filtro-cadastrante');
+  const cdAtual = selCd.value;
+  selCd.innerHTML = '<option value="">Todos</option>' +
+    cacheCadastrantes.slice().sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
+      .map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join('');
+  selCd.value = cdAtual;
+
+  const selS = document.getElementById('filtro-servico');
+  const sAtual = selS.value;
+  selS.innerHTML = '<option value="">Todos</option>' +
+    cacheServicos.slice().sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
+      .map(s => `<option value="${s.id}">${esc(s.nome)}</option>`).join('');
+  selS.value = sAtual;
+}
+
+window.aplicarFiltros = function() {
+  const tbody = document.getElementById('tabela-pessoas');
+  const busca = (document.getElementById('filtro-busca').value || '').toLowerCase().trim();
+  const catId = document.getElementById('filtro-categoria').value;
+  const cdId = document.getElementById('filtro-cadastrante').value;
+  const sId = document.getElementById('filtro-servico').value;
+  const de = document.getElementById('filtro-de').value;
+  const ate = document.getElementById('filtro-ate').value;
+
+  const catMap = {}; cacheCategorias.forEach(c => catMap[c.id] = c.nome);
+  const cdMap = {}; cacheCadastrantes.forEach(c => cdMap[c.id] = c.nome);
+  const sMap = {}; cacheServicos.forEach(s => sMap[s.id] = s);
+
+  let lista = cachePessoas.slice();
+  if (busca) {
+    lista = lista.filter(p =>
+      (p.nome || '').toLowerCase().includes(busca) ||
+      (p.email || '').toLowerCase().includes(busca) ||
+      (p.telefone || '').toLowerCase().includes(busca) ||
+      (p.cpf || '').toLowerCase().includes(busca)
+    );
+  }
+  if (catId) lista = lista.filter(p => p.categoriaId === catId);
+  if (cdId) lista = lista.filter(p => p.cadastranteId === cdId);
+  if (sId) lista = lista.filter(p => p.servicoId === sId);
+  if (de) {
+    const dtDe = new Date(de + 'T00:00:00');
+    lista = lista.filter(p => {
+      const criado = p.criadoEm?.toDate ? p.criadoEm.toDate() : (p.criadoEm ? new Date(p.criadoEm) : null);
+      return criado && criado >= dtDe;
+    });
+  }
+  if (ate) {
+    const dtAte = new Date(ate + 'T23:59:59');
+    lista = lista.filter(p => {
+      const criado = p.criadoEm?.toDate ? p.criadoEm.toDate() : (p.criadoEm ? new Date(p.criadoEm) : null);
+      return criado && criado <= dtAte;
+    });
+  }
+
+  lista.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+  document.getElementById('filtro-contador').textContent = `${lista.length} de ${cachePessoas.length} pessoa(s)`;
+
+  if (lista.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">Nenhuma pessoa encontrada.</td></tr>';
+    return;
+  }
+
+  const idsVisiveis = new Set(lista.map(p => p.id));
+  pessoasSelecionadas.forEach(id => { if (!idsVisiveis.has(id)) pessoasSelecionadas.delete(id); });
+
+  tbody.innerHTML = lista.map(p => {
+    const qtdDocs = (p.documentos || []).length;
+    const botaoDocs = qtdDocs > 0
+      ? `<button class="btn btn-sm btn-success" onclick="verDocs('${p.id}')">${qtdDocs}</button>`
+      : '<span class="text-muted">—</span>';
+    const servico = p.servicoId && sMap[p.servicoId] ? sMap[p.servicoId].nome : (p.servicoNome || '-');
+    const valor = p.servicoValor != null ? formatarMoeda(p.servicoValor)
+                 : (p.servicoId && sMap[p.servicoId] ? formatarMoeda(sMap[p.servicoId].valor) : '—');
+    const sel = pessoasSelecionadas.has(p.id) ? 'checked' : '';
+    return `<tr>
+      <td><input type="checkbox" class="chk-pessoa" data-id="${p.id}" ${sel} onchange="toggleSelecao('${p.id}', this.checked)"></td>
+      <td>${esc(p.nome)}</td>
+      <td>${esc(p.email)}</td>
+      <td>${esc(p.telefone || '-')}</td>
+      <td>${esc(catMap[p.categoriaId] || '-')}</td>
+      <td>${esc(servico)}</td>
+      <td class="text-end">${valor}</td>
+      <td>${esc(cdMap[p.cadastranteId] || '-')}</td>
+      <td>${botaoDocs}</td>
+      <td class="text-nowrap">
+        <button class="btn btn-sm btn-outline-primary" onclick="imprimirFicha('${p.id}')" title="Imprimir ficha">🖨</button>
+        <button class="btn btn-sm btn-warning" onclick="abrirFormPessoa('${p.id}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="excluirPessoa('${p.id}')">Excluir</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  atualizarChkTodos();
+};
+
+window.toggleSelecao = function(id, marcado) {
+  if (marcado) pessoasSelecionadas.add(id);
+  else pessoasSelecionadas.delete(id);
+  atualizarChkTodos();
+};
+window.toggleTodos = function(chk) {
+  const visiveis = document.querySelectorAll('.chk-pessoa');
+  visiveis.forEach(el => {
+    el.checked = chk.checked;
+    if (chk.checked) pessoasSelecionadas.add(el.dataset.id);
+    else pessoasSelecionadas.delete(el.dataset.id);
+  });
+};
+function atualizarChkTodos() {
+  const visiveis = document.querySelectorAll('.chk-pessoa');
+  const chk = document.getElementById('chk-todos');
+  if (!chk) return;
+  const marcados = Array.from(visiveis).filter(el => el.checked).length;
+  chk.checked = visiveis.length > 0 && marcados === visiveis.length;
+  chk.indeterminate = marcados > 0 && marcados < visiveis.length;
+}
+window.limparFiltros = function() {
+  ['filtro-busca','filtro-categoria','filtro-cadastrante','filtro-servico','filtro-de','filtro-ate']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  pessoasSelecionadas.clear();
+  aplicarFiltros();
+};
+
+window.abrirFormPessoa = async function(id = null) {
+  document.getElementById('form-pessoa').reset();
+  document.getElementById('pessoa-id').value = '';
+  document.getElementById('msg-form-pessoa').innerHTML = '';
+  document.getElementById('links-container').innerHTML = '';
+  document.getElementById('documentos-container').innerHTML = '';
+  document.getElementById('titulo-form-pessoa').textContent = 'Nova Pessoa';
+  document.getElementById('pessoa-servico-valor').value = '';
+  documentosTemp = [];
+
+  try {
+    const [cSnap, cdSnap, sSnap] = await Promise.all([
+      getDocs(collection(db, 'categorias')),
+      getDocs(collection(db, 'cadastrantes')),
+      getDocs(collection(db, 'servicos'))
+    ]);
+    document.getElementById('pessoa-categoria').innerHTML =
+      '<option value="">-- Selecione --</option>' +
+      cSnap.docs.map(d => `<option value="${d.id}">${esc(d.data().nome)}</option>`).join('');
+    document.getElementById('pessoa-cadastrante').innerHTML =
+      '<option value="">-- Selecione --</option>' +
+      cdSnap.docs.map(d => `<option value="${d.id}">${esc(d.data().nome)}</option>`).join('');
+    const servicos = sSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    document.getElementById('pessoa-servico').innerHTML =
+      '<option value="">-- Selecione --</option>' +
+      servicos.filter(s => s.ativo !== false)
+        .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
+        .map(s => `<option value="${s.id}" data-valor="${s.valor}">${esc(s.nome)} — ${formatarMoeda(s.valor)}</option>`).join('');
+  } catch (err) {}
+
+  if (id) {
+    try {
+      const snap = await getDoc(doc(db, 'pessoas', id));
+      if (snap.exists()) {
+        const p = snap.data();
+        document.getElementById('pessoa-id').value = id;
+        document.getElementById('pessoa-nome').value = p.nome || '';
+        document.getElementById('pessoa-email').value = p.email || '';
+        document.getElementById('pessoa-telefone').value = mascaraTelefone(p.telefone || '');
+        document.getElementById('pessoa-cpf').value = mascaraCPF(p.cpf || '');
+        document.getElementById('pessoa-nasc').value = p.dataNascimento || '';
+        document.getElementById('pessoa-categoria').value = p.categoriaId || '';
+        document.getElementById('pessoa-cadastrante').value = p.cadastranteId || '';
+        if (p.servicoId) {
+          const opt = document.querySelector(`#pessoa-servico option[value="${p.servicoId}"]`);
+          if (!opt) {
+            const s = cacheServicos.find(x => x.id === p.servicoId);
+            if (s) {
+              const newOpt = document.createElement('option');
+              newOpt.value = s.id;
+              newOpt.dataset.valor = s.valor;
+              newOpt.textContent = `${s.nome} — ${formatarMoeda(s.valor)} (inativo)`;
+              document.getElementById('pessoa-servico').appendChild(newOpt);
+            }
+          }
+        }
+        document.getElementById('pessoa-servico').value = p.servicoId || '';
+        document.getElementById('pessoa-servico-valor').value =
+          p.servicoValor != null ? formatarMoeda(p.servicoValor) : '';
+        document.getElementById('titulo-form-pessoa').textContent = 'Editar Pessoa';
+        (p.links || []).forEach(l => addLinkRow(l.titulo, l.url));
+        documentosTemp = (p.documentos || []).map(d => ({ ...d }));
+      }
+    } catch (err) {}
+  }
+  renderDocumentosTemp();
+  showView('form-pessoa');
+};
+
+window.atualizarValorServico = function() {
+  const sel = document.getElementById('pessoa-servico');
+  const opt = sel.options[sel.selectedIndex];
+  const valor = opt?.dataset?.valor;
+  const campo = document.getElementById('pessoa-servico-valor');
+  campo.value = valor ? formatarMoeda(parseFloat(valor)) : '';
+};
+
+window.addLinkRow = function(titulo = '', url = '') {
+  const container = document.getElementById('links-container');
+  const div = document.createElement('div');
+  div.className = 'row mb-2 link-row g-2 align-items-center';
+  div.innerHTML = `
+    <div class="col-12 col-md-4"><input type="text" class="form-control link-titulo" placeholder="Título" value="${esc(titulo)}"></div>
+    <div class="col-12 col-md-6"><input type="url" class="form-control link-url" placeholder="https://..." value="${esc(url)}"></div>
+    <div class="col-12 col-md-2"><button type="button" class="btn btn-danger w-100" onclick="this.closest('.link-row').remove()">X</button></div>`;
+  container.appendChild(div);
+};
+function coletarLinks() {
+  const rows = document.querySelectorAll('#links-container .link-row');
+  const links = [];
+  rows.forEach(row => {
+    const titulo = row.querySelector('.link-titulo').value.trim();
+    const url = row.querySelector('.link-url').value.trim();
+    if (url) links.push({ titulo: titulo || 'Link', url });
+  });
+  return links;
+}
+window.salvarPessoa = async function(e) {
+  e.preventDefault();
+  const msg = document.getElementById('msg-form-pessoa');
+  msg.innerHTML = '';
+  const id = document.getElementById('pessoa-id').value;
+  const servicoId = document.getElementById('pessoa-servico').value || null;
+  let servicoNome = null, servicoValor = null;
+  if (servicoId) {
+    const serv = cacheServicos.find(s => s.id === servicoId) ||
+      (await getDoc(doc(db, 'servicos', servicoId))).data();
+    if (serv) { servicoNome = serv.nome; servicoValor = Number(serv.valor) || 0; }
+  }
+  const dados = {
+    nome: document.getElementById('pessoa-nome').value.trim(),
+    email: document.getElementById('pessoa-email').value.trim(),
+    telefone: document.getElementById('pessoa-telefone').value.trim(),
+    cpf: document.getElementById('pessoa-cpf').value.trim(),
+    dataNascimento: document.getElementById('pessoa-nasc').value,
+    categoriaId: document.getElementById('pessoa-categoria').value || null,
+    cadastranteId: document.getElementById('pessoa-cadastrante').value || null,
+    servicoId, servicoNome, servicoValor,
+    links: coletarLinks(),
+    documentos: documentosTemp
+  };
+  if (!dados.cadastranteId) {
+    msg.innerHTML = `<div class="alert alert-warning">Selecione um cadastrante.</div>`;
+    return;
+  }
+  if (!dados.servicoId) {
+    msg.innerHTML = `<div class="alert alert-warning">Selecione um serviço.</div>`;
+    return;
+  }
+  try {
+    if (id) await updateDoc(doc(db, 'pessoas', id), dados);
+    else await addDoc(collection(db, 'pessoas'), { ...dados, criadoEm: new Date() });
+    showView('pessoas');
+  } catch (err) {
+    msg.innerHTML = `<div class="alert alert-danger">Erro: ${esc(err.message)}</div>`;
+  }
+};
+window.excluirPessoa = async function(id) {
+  if (!confirm('Excluir pessoa?')) return;
+  try {
+    await deleteDoc(doc(db, 'pessoas', id));
+    renderPessoas();
+  } catch (err) { alert('Erro: ' + err.message); }
+};
+
+/* ============================================================
+   VIEW LINKS / DOCS
+   ============================================================ */
+window.verLinks = async function(pessoaId) {
+  try {
+    const snap = await getDoc(doc(db, 'pessoas', pessoaId));
+    if (!snap.exists()) return;
+    const p = snap.data();
+    document.getElementById('links-pessoa-nome').textContent = p.nome;
+    const container = document.getElementById('lista-links');
+    const links = p.links || [];
+    if (links.length === 0) container.innerHTML = '<p class="text-muted mb-0">Nenhum link cadastrado.</p>';
+    else container.innerHTML = links.map(l => `
+      <div class="link-item">
+        <div><strong>${esc(l.titulo)}</strong><br>
+          <a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.url)}</a></div>
+        <a class="btn btn-sm btn-primary" href="${esc(l.url)}" target="_blank" rel="noopener">Abrir</a>
+      </div>`).join('');
+    showView('links');
+  } catch (err) {}
+};
+window.verDocs = async function(pessoaId) {
+  try {
+    const snap = await getDoc(doc(db, 'pessoas', pessoaId));
+    if (!snap.exists()) return;
+    const p = snap.data();
+    document.getElementById('docs-pessoa-nome').textContent = p.nome;
+    const container = document.getElementById('lista-docs');
+    const docs = p.documentos || [];
+    if (docs.length === 0) container.innerHTML = '<p class="text-muted mb-0">Nenhum documento anexado.</p>';
+    else container.innerHTML = docs.map(d => {
+      const badge = d.status === 'validado'
+        ? '<span class="doc-badge validado">validado</span>'
+        : '<span class="doc-badge pendente">pendente</span>';
+      const verso = d.versoUrl
+        ? `<button class="btn btn-sm btn-outline-secondary" onclick="abrirVisualizador('${esc(d.versoUrl)}', '${esc(d.tipo)} — Verso')">👁 Ver verso</button>
+           <button class="btn btn-sm btn-outline-success" onclick="salvarDocLocalById('${pessoaId}', '${d.id}', 'verso')">💾 Verso</button>`
+        : '';
+      return `
+        <div class="doc-card">
+          <div class="doc-info">
+            <div class="doc-tipo">${esc(d.tipo)} ${badge}</div>
+            <div class="doc-meta">Anexado em ${new Date(d.enviadoEm).toLocaleString('pt-BR')}</div>
+          </div>
+          <div class="doc-actions">
+            <button class="btn btn-sm btn-primary" onclick="abrirVisualizador('${esc(d.frenteUrl)}', '${esc(d.tipo)} — Frente')">👁 Ver frente</button>
+            <button class="btn btn-sm btn-outline-success" onclick="salvarDocLocalById('${pessoaId}', '${d.id}', 'frente')">💾 Frente</button>
+            ${verso}
+          </div>
+        </div>`;
+    }).join('');
+    showView('docs');
+  } catch (err) {}
+};
+window.salvarDocLocalById = async function(pessoaId, docId, lado) {
+  try {
+    const snap = await getDoc(doc(db, 'pessoas', pessoaId));
+    if (!snap.exists()) return;
+    const docs = snap.data().documentos || [];
+    const d = docs.find(x => x.id === docId);
+    if (!d) return;
+    const url = lado === 'verso' ? d.versoUrl : d.frenteUrl;
+    if (!url) { alert('Arquivo não disponível.'); return; }
+    salvarNoCelular(urlVisualizacao(url), `${d.tipo}_${lado}_${Date.now()}.pdf`);
+  } catch (err) {}
+};
+
+/* ============================================================
+   IMPRESSÃO FICHA
+   ============================================================ */
+window.imprimirFicha = async function(pessoaId) {
+  try {
+    const snap = await getDoc(doc(db, 'pessoas', pessoaId));
+    if (!snap.exists()) return;
+    const p = snap.data();
+    const cat = cacheCategorias.find(c => c.id === p.categoriaId);
+    const cd = cacheCadastrantes.find(c => c.id === p.cadastranteId);
+    const serv = cacheServicos.find(s => s.id === p.servicoId);
+    const nomeServico = p.servicoNome || serv?.nome || '—';
+    const valorServico = p.servicoValor != null ? p.servicoValor : (serv?.valor ?? 0);
+    const criado = p.criadoEm?.toDate ? p.criadoEm.toDate() : (p.criadoEm ? new Date(p.criadoEm) : null);
+
+    const docs = (p.documentos || []).map(d => {
+      const urlF = urlVisualizacao(d.frenteUrl);
+      const urlV = d.versoUrl ? urlVisualizacao(d.versoUrl) : null;
+      return `<li><strong>${esc(d.tipo)}</strong> — ${esc(d.status)}
+        <br><small><a href="${urlF}" target="_blank">Frente</a>${urlV ? ` · <a href="${urlV}" target="_blank">Verso</a>` : ''}</small></li>`;
+    }).join('');
+
+    const links = (p.links || []).map(l => `<li>${esc(l.titulo)}: <a href="${esc(l.url)}" target="_blank">${esc(l.url)}</a></li>`).join('');
+
+    const html = `
+      <div class="ficha-print">
+        <h3>Ficha de Cadastro — PROMATEC</h3>
+        <div class="ficha-sub">Emitida em ${new Date().toLocaleString('pt-BR')}</div>
+        <div class="ficha-secao">
+          <h5>Dados Pessoais</h5>
+          <div class="ficha-grid">
+            <div class="ficha-linha"><strong>Nome:</strong> ${esc(p.nome)}</div>
+            <div class="ficha-linha"><strong>E-mail:</strong> ${esc(p.email || '-')}</div>
+            <div class="ficha-linha"><strong>Telefone:</strong> ${esc(p.telefone || '-')}</div>
+            <div class="ficha-linha"><strong>CPF:</strong> ${esc(p.cpf || '-')}</div>
+            <div class="ficha-linha"><strong>Nascimento:</strong> ${p.dataNascimento ? new Date(p.dataNascimento + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</div>
+            <div class="ficha-linha"><strong>Categoria:</strong> ${esc(cat?.nome || '-')}</div>
+          </div>
+        </div>
+        <div class="ficha-secao">
+          <h5>Serviço Contratado</h5>
+          <div class="ficha-servico">
+            <div style="font-size:.85rem;color:#6c757d;">Serviço</div>
+            <div style="font-weight:600;font-size:1.05rem;">${esc(nomeServico)}</div>
+            <div class="valor">${formatarMoeda(valorServico)}</div>
+          </div>
+        </div>
+        <div class="ficha-secao">
+          <h5>Cadastro</h5>
+          <div class="ficha-grid">
+            <div class="ficha-linha"><strong>Cadastrante:</strong> ${esc(cd?.nome || '-')}</div>
+            <div class="ficha-linha"><strong>Cargo:</strong> ${esc(cd?.cargo || '-')}</div>
+            <div class="ficha-linha"><strong>Data cadastro:</strong> ${criado ? criado.toLocaleString('pt-BR') : '-'}</div>
+            <div class="ficha-linha"><strong>Documentos:</strong> ${(p.documentos || []).length}</div>
+          </div>
+        </div>
+        ${docs ? `<div class="ficha-secao"><h5>Documentos Anexados</h5><ul>${docs}</ul></div>` : ''}
+        ${links ? `<div class="ficha-secao"><h5>Links</h5><ul>${links}</ul></div>` : ''}
+        <div class="ficha-assinatura">Assinatura do titular</div>
+      </div>`;
+
+    document.getElementById('ficha-conteudo').innerHTML = html;
+    showView('ficha');
+    setTimeout(() => window.print(), 300);
+  } catch (err) {
+    alert('Erro ao gerar ficha: ' + err.message);
+  }
+};
+
+window.imprimirLote = async function() {
+  if (pessoasSelecionadas.size === 0) { alert('Selecione ao menos uma pessoa na tabela.'); return; }
+  try {
+    const pessoas = [];
+    for (const id of pessoasSelecionadas) {
+      const snap = await getDoc(doc(db, 'pessoas', id));
+      if (snap.exists()) pessoas.push({ id, ...snap.data() });
+    }
+    const fichas = pessoas.map(p => {
+      const cat = cacheCategorias.find(c => c.id === p.categoriaId);
+      const cd = cacheCadastrantes.find(c => c.id === p.cadastranteId);
+      const serv = cacheServicos.find(s => s.id === p.servicoId);
+      const nomeServico = p.servicoNome || serv?.nome || '—';
+      const valorServico = p.servicoValor != null ? p.servicoValor : (serv?.valor ?? 0);
+      const criado = p.criadoEm?.toDate ? p.criadoEm.toDate() : (p.criadoEm ? new Date(p.criadoEm) : null);
+      return `
+        <div class="ficha-print" style="page-break-after:always;">
+          <h3>Ficha de Cadastro — PROMATEC</h3>
+          <div class="ficha-sub">Emitida em ${new Date().toLocaleString('pt-BR')}</div>
+          <div class="ficha-secao">
+            <h5>Dados Pessoais</h5>
+            <div class="ficha-grid">
+              <div class="ficha-linha"><strong>Nome:</strong> ${esc(p.nome)}</div>
+              <div class="ficha-linha"><strong>E-mail:</strong> ${esc(p.email || '-')}</div>
+              <div class="ficha-linha"><strong>Telefone:</strong> ${esc(p.telefone || '-')}</div>
+              <div class="ficha-linha"><strong>CPF:</strong> ${esc(p.cpf || '-')}</div>
+              <div class="ficha-linha"><strong>Nascimento:</strong> ${p.dataNascimento ? new Date(p.dataNascimento + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</div>
+              <div class="ficha-linha"><strong>Categoria:</strong> ${esc(cat?.nome || '-')}</div>
+            </div>
+          </div>
+          <div class="ficha-secao">
+            <h5>Serviço Contratado</h5>
+            <div class="ficha-servico">
+              <div style="font-size:.85rem;color:#6c757d;">Serviço</div>
+              <div style="font-weight:600;font-size:1.05rem;">${esc(nomeServico)}</div>
+              <div class="valor">${formatarMoeda(valorServico)}</div>
+            </div>
+          </div>
+          <div class="ficha-secao">
+            <h5>Cadastro</h5>
+            <div class="ficha-grid">
+              <div class="ficha-linha"><strong>Cadastrante:</strong> ${esc(cd?.nome || '-')}</div>
+              <div class="ficha-linha"><strong>Cargo:</strong> ${esc(cd?.cargo || '-')}</div>
+              <div class="ficha-linha"><strong>Data cadastro:</strong> ${criado ? criado.toLocaleString('pt-BR') : '-'}</div>
+              <div class="ficha-linha"><strong>Documentos:</strong> ${(p.documentos || []).length}</div>
+            </div>
+          </div>
+          <div class="ficha-assinatura">Assinatura do titular</div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('ficha-conteudo').innerHTML = fichas;
+    showView('ficha');
+    setTimeout(() => window.print(), 300);
+  } catch (err) {
+    alert('Erro ao gerar lote: ' + err.message);
+  }
+};
+
+/* ============================================================
+   RELATÓRIO
+   ============================================================ */
+window.abrirRelatorio = async function() {
+  const modal = new bootstrap.Modal(document.getElementById('modalRelatorio'));
+  const corpo = document.getElementById('relatorio-corpo');
+  corpo.innerHTML = '<p class="text-muted text-center">Gerando relatório...</p>';
+  modal.show();
+  try {
+    const [pSnap, cSnap, cdSnap, sSnap] = await Promise.all([
+      getDocs(collection(db, 'pessoas')),
+      getDocs(collection(db, 'categorias')),
+      getDocs(collection(db, 'cadastrantes')),
+      getDocs(collection(db, 'servicos'))
+    ]);
+    const pessoas = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const categorias = cSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const cadastrantes = cdSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const servicos = sSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    const totalPessoas = pessoas.length;
+    const totalDocs = pessoas.reduce((s, p) => s + (p.documentos || []).length, 0);
+    const totalLinks = pessoas.reduce((s, p) => s + (p.links || []).length, 0);
+    const valorTotal = pessoas.reduce((s, p) => s + (Number(p.servicoValor) || 0), 0);
+
+    const porCat = {};
+    categorias.forEach(c => porCat[c.id] = { nome: c.nome, total: 0 });
+    porCat['__sem__'] = { nome: 'Sem categoria', total: 0 };
+    pessoas.forEach(p => {
+      if (p.categoriaId && porCat[p.categoriaId]) porCat[p.categoriaId].total++;
+      else porCat['__sem__'].total++;
+    });
+    const porCd = {};
+    cadastrantes.forEach(c => porCd[c.id] = { nome: c.nome, total: 0, cargo: c.cargo || '' });
+    porCd['__sem__'] = { nome: 'Sem cadastrante', total: 0, cargo: '' };
+    pessoas.forEach(p => {
+      if (p.cadastranteId && porCd[p.cadastranteId]) porCd[p.cadastranteId].total++;
+      else porCd['__sem__'].total++;
+    });
+    const porServ = {};
+    servicos.forEach(s => porServ[s.id] = { nome: s.nome, valor: Number(s.valor) || 0, total: 0, soma: 0 });
+    porServ['__sem__'] = { nome: 'Sem serviço', valor: 0, total: 0, soma: 0 };
+    pessoas.forEach(p => {
+      const key = p.servicoId && porServ[p.servicoId] ? p.servicoId : '__sem__';
+      porServ[key].total++;
+      porServ[key].soma += Number(p.servicoValor) || 0;
+    });
+    let docsValidados = 0, docsPendentes = 0;
+    pessoas.forEach(p => (p.documentos || []).forEach(d => {
+      if (d.status === 'validado') docsValidados++;
+      else docsPendentes++;
+    }));
+
+    corpo.innerHTML = `
+      <div class="relatorio-resumo">
+        <div class="relatorio-card"><div class="num">${totalPessoas}</div><div class="lbl">Pessoas</div></div>
+        <div class="relatorio-card"><div class="num">${totalDocs}</div><div class="lbl">Documentos</div></div>
+        <div class="relatorio-card"><div class="num">${docsValidados}</div><div class="lbl">Docs validados</div></div>
+        <div class="relatorio-card"><div class="num">${docsPendentes}</div><div class="lbl">Docs pendentes</div></div>
+        <div class="relatorio-card"><div class="num">${totalLinks}</div><div class="lbl">Links</div></div>
+        <div class="relatorio-card"><div class="num">${formatarMoeda(valorTotal)}</div><div class="lbl">Valor total</div></div>
+      </div>
+      <h5 class="mt-4">📂 Por Categoria</h5>
+      <div class="table-responsive"><table class="table table-sm table-striped relatorio-tabela">
+        <thead><tr><th>Categoria</th><th class="text-end">Pessoas</th><th class="text-end">%</th></tr></thead>
+        <tbody>${Object.values(porCat).filter(c => c.total > 0 || c.nome !== 'Sem categoria')
+          .sort((a, b) => b.total - a.total)
+          .map(c => `<tr><td>${esc(c.nome)}</td><td class="text-end">${c.total}</td>
+            <td class="text-end">${totalPessoas ? ((c.total / totalPessoas) * 100).toFixed(1) : 0}%</td></tr>`).join('')}</tbody>
+      </table></div>
+      <h5 class="mt-4">👤 Por Cadastrante</h5>
+      <div class="table-responsive"><table class="table table-sm table-striped relatorio-tabela">
+        <thead><tr><th>Cadastrante</th><th>Cargo</th><th class="text-end">Pessoas</th><th class="text-end">%</th></tr></thead>
+        <tbody>${Object.values(porCd).filter(c => c.total > 0 || c.nome !== 'Sem cadastrante')
+          .sort((a, b) => b.total - a.total)
+          .map(c => `<tr><td>${esc(c.nome)}</td><td>${esc(c.cargo || '-')}</td>
+            <td class="text-end">${c.total}</td>
+            <td class="text-end">${totalPessoas ? ((c.total / totalPessoas) * 100).toFixed(1) : 0}%</td></tr>`).join('')}</tbody>
+      </table></div>
+      <h5 class="mt-4">🛠 Por Serviço</h5>
+      <div class="table-responsive"><table class="table table-sm table-striped relatorio-tabela">
+        <thead><tr><th>Serviço</th><th class="text-end">Valor unit.</th><th class="text-end">Pessoas</th><th class="text-end">Total</th></tr></thead>
+        <tbody>${Object.values(porServ).filter(s => s.total > 0 || s.nome !== 'Sem serviço')
+          .sort((a, b) => b.soma - a.soma)
+          .map(s => `<tr><td>${esc(s.nome)}</td>
+            <td class="text-end">${formatarMoeda(s.valor)}</td>
+            <td class="text-end">${s.total}</td>
+            <td class="text-end">${formatarMoeda(s.soma)}</td></tr>`).join('')}</tbody>
+      </table></div>
+      <p class="text-muted small mt-3 mb-0">Gerado em ${new Date().toLocaleString('pt-BR')}</p>`;
+
+    window.__relatorioDados = { pessoas, categorias, cadastrantes, servicos };
+  } catch (err) {
+    corpo.innerHTML = `<div class="alert alert-danger">Erro: ${esc(err.message)}</div>`;
+  }
+};
+window.exportarRelatorioCSV = function() {
+  const dados = window.__relatorioDados;
+  if (!dados) { alert('Relatório não carregado.'); return; }
+  const catMap = {}; dados.categorias.forEach(c => catMap[c.id] = c.nome);
+  const cdMap = {}; dados.cadastrantes.forEach(c => cdMap[c.id] = c.nome);
+  const sMap = {}; dados.servicos.forEach(s => sMap[s.id] = s.nome);
+
+  const header = ['Nome','E-mail','Telefone','CPF','Nascimento','Categoria','Serviço','Valor (R$)','Cadastrante','Qtd Documentos','Qtd Links'];
+  const linhas = dados.pessoas
+    .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
+    .map(p => [
+      p.nome || '', p.email || '', p.telefone || '', p.cpf || '', p.dataNascimento || '',
+      catMap[p.categoriaId] || '', p.servicoNome || sMap[p.servicoId] || '',
+      p.servicoValor != null ? Number(p.servicoValor).toFixed(2).replace('.', ',') : '',
+      cdMap[p.cadastranteId] || '', (p.documentos || []).length, (p.links || []).length
+    ]);
+  const csv = [header, ...linhas].map(row =>
+    row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')
+  ).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `relatorio_cadastros_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+/* ============================================================
+   UTIL
+   ============================================================ */
+function esc(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
